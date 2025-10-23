@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcphub-config
+  labels:
+    app: mcphub
+data:
+  mcp_settings.json: |
+    {
+      "mcpServers": {
+        "playwright": {
+          "command": "npx",
+          "args": ["@playwright/mcp@latest", "--headless"]
+        }
+      }
+    }

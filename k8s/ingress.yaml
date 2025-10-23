@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcphub-ingress
+  labels:
+    app: mcphub
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # Uncomment and modify for your domain
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  # Uncomment for HTTPS
+  # tls:
+  # - hosts:
+  #   - mcphub.yourdomain.com
+  #   secretName: mcphub-tls
+  rules:
+  - host: mcphub.yourdomain.com # Replace with your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mcphub-service
+            port:
+              number: 80
