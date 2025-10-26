@@ -1,0 +1,60 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest", "--headless"]
+    },
+    "perplexity": {
+      "command": "npx",
+      "args": ["-y", "@perplexity-ai/mcp-server"]
+    },
+    "deepwiki": {
+      "type": "sse",
+      "url": "https://mcp.deepwiki.com/sse"
+    },
+    "context7": {
+      "type": "streamable-http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "github": {
+      "command": "/usr/local/bin/github-mcp-server",
+      "args": ["stdio"]
+    }
+  },
+  "systemConfig": {
+    "routing": {
+      "enableGlobalRoute": false,
+      "enableGroupNameRoute": false
+    },
+    "install": {
+      "baseUrl": "http://localhost:3000"
+    }
+  },
+  "groups": [
+    {
+      "name": "agent",
+      "servers": [
+        {
+          "name": "playwright",
+          "tools": "all"
+        },
+        {
+          "name": "perplexity",
+          "tools": "all"
+        },
+        {
+          "name": "deepwiki",
+          "tools": "all"
+        },
+        {
+          "name": "context7",
+          "tools": "all"
+        },
+        {
+          "name": "github",
+          "tools": "all"
+        }
+      ]
+    }
+  ]
+}
