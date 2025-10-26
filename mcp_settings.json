@@ -18,7 +18,11 @@
     },
     "github": {
       "command": "/usr/local/bin/github-mcp-server",
-      "args": ["stdio"]
+      "args": ["stdio"],
+      "env": {
+        "GITHUB_TOOLSETS": "default,projects",
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
     }
   },
   "systemConfig": {
