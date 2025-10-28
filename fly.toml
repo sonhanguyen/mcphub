@@ -1,12 +1,6 @@
 app = 'mcphubx'
 primary_region = 'sin'
 
-[env]
-  AUTH_PASSWORD = { from_secret = "AUTH_PASSWORD" }
-  PERPLEXITY_API_KEY = { from_secret = "PERPLEXITY_KEY" }
-  GITHUB_TOKEN = { from_secret = "GITHUB_TOKEN" }
-  GROUP_IDS = { from_secret = "GROUP_IDS" }
-
 [build]
   dockerfile = "Dockerfile"
 

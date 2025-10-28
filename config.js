@@ -3,6 +3,7 @@
 import fs from "fs"
 import bcrypt from "bcrypt"
 import path from "path"
+import crypto from "crypto"
 
 const PERSISTENT_SETTINGS = "/app/data/mcp_settings.json"
 const SETTINGS = "/app/mcp_settings.json"
@@ -28,6 +29,28 @@ function deepMerge(target, source) {
   return source
 }
 
+function expandGroupTemplates(groups) {
+  const groupsByName = Object.fromEntries(
+    groups.map(group => [group.name, group])
+  )
+
+  return groups.map(({ include, ...group }) => {
+    if (!Array.isArray(include)) return group
+
+    const inherited = include.flatMap(name => {
+      const included = groupsByName[name]
+      if (included) return included.servers
+      throw `Group "${name}" not found for inclusion in "${group.name}"`
+    })
+
+    const servers = Object.fromEntries(
+      inherited.map(it => [it.name, it]))
+    for (let it of group.servers) servers[it.name] = it
+
+    return { ...group, servers: Object.values(servers) }
+  })
+}
+
 let settings = JSON.parse(fs.readFileSync(SETTINGS, "utf8"))
 
 let persistentSettings = {}
@@ -51,28 +74,36 @@ if (admin) Object.assign(admin, { password })
 else settings.users.push(admin)
 
 if (settings.groups) {
-  const groups = {}
-  GROUP_IDS.split(',').forEach(pair => {
-    const [id, name] = pair.split(':').map(s => s.trim())
-    if (id && name) groups[name] = id
+  settings.groups = expandGroupTemplates(settings.groups)
+
+  const ids = Object.fromEntries(
+    GROUP_IDS.split(',').map(pair => {
+      const [id, name] = pair.split(':').map(_ => _.trim())
+      return [name, id]
+    })
+  )
+
+  const newGroups = settings.groups.filter(group => {
+    if (!group.id) group.id = ids[group.name]
+    if (group.id) return
+
+    group.id = crypto.randomUUID()
+    return true
   })
 
-  settings.groups.forEach(group => {
-    group.id = groups[group.name]
-    if (!group.id) console.error(`Error: Group "${group.name}" is should have an ID in either the config or GROUP_IDS (env)`)
-  })
+  if (newGroups.length) console.warn(
+    'New group(s) added, please run',
+    `fly secrets set GROUP_IDS="${newGroups
+      .map(_ => `${_.id}:${_.name}`)
+      .concat(GROUP_IDS)}"
+    `
+  )
 }
 
 const settingsDir = path.dirname(PERSISTENT_SETTINGS)
 if (!fs.existsSync(settingsDir)) fs.mkdirSync(settingsDir, { recursive: true })
 
-// Write merged settings
 fs.writeFileSync(
   PERSISTENT_SETTINGS,
   JSON.stringify(settings, null, 2),
-)
-
-console.log(
-  'Configuration merged successfully\n',
-  `MCP servers: ${Object.keys(settings.mcpServers)}`
 )

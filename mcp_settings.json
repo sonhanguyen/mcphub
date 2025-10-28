@@ -6,7 +6,10 @@
     },
     "perplexity": {
       "command": "npx",
-      "args": ["-y", "@perplexity-ai/mcp-server"]
+      "args": ["-y", "@perplexity-ai/mcp-server@0.2.2"],
+      "env": {
+        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
+      }
     },
     "deepwiki": {
       "type": "sse",
@@ -17,11 +20,11 @@
       "url": "https://mcp.context7.com/mcp"
     },
     "github": {
-      "command": "/usr/local/bin/github-mcp-server",
-      "args": ["stdio"],
-      "env": {
-        "GITHUB_TOOLSETS": "default,projects",
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      "type": "streamable-http",
+      "url": "https://api.githubcopilot.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}",
+        "X-MCP-Toolsets": "default,projects"
       }
     }
   },
@@ -37,26 +40,37 @@
   "groups": [
     {
       "name": "agent",
+      "description": "base tools for agents",
+      "servers": [
+        { "name": "playwright" },
+        { "name": "perplexity" },
+        { "name": "deepwiki" },
+        { "name": "context7" },
+        { "name": "github" }
+      ]
+    },
+    {
+      "name": "copilot",
+      "description": "for GitHub Copilot agents (Projects V2 not built-in)",
+      "include": ["agent"],
       "servers": [
         {
           "name": "playwright",
-          "tools": "all"
-        },
-        {
-          "name": "perplexity",
-          "tools": "all"
-        },
-        {
-          "name": "deepwiki",
-          "tools": "all"
-        },
-        {
-          "name": "context7",
-          "tools": "all"
+          "enabled": false
         },
         {
           "name": "github",
-          "tools": "all"
+          "tools": [
+            "add_project_item",
+            "delete_project_item",
+            "get_project",
+            "get_project_field",
+            "get_project_item",
+            "list_project_fields",
+            "list_project_items",
+            "list_projects",
+            "update_project_item"
+          ]
         }
       ]
     }
