@@ -7,6 +7,8 @@ import crypto from "crypto"
 
 const PERSISTENT_SETTINGS = "/app/data/mcp_settings.json"
 const SETTINGS = "/app/mcp_settings.json"
+const SKILLS_DIR = "/app/skills"
+const SKILLS_DATA_DIR = "/app/data/skills"
 const { AUTH_PASSWORD, GROUP_IDS = '' } = process.env
 
 if (!AUTH_PASSWORD) {
@@ -27,6 +29,76 @@ function deepMerge(target, source) {
   }
 
   return source
+}
+
+function parseFrontmatter(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---/)
+  if (!match) return {}
+
+  return Object.fromEntries(match.pop().split('\n')
+    .flatMap(line => {
+      const [key, value = ''] = line.split(/\s*:\s*(.+)/).map(_ => _.trim())
+      if (!key) return []
+
+      if (value.startsWith('[') && value.endsWith(']')) {
+        const items = value.slice(1, -1).split(/\s*,\s*/).filter(Boolean)
+        return [[key, items]]
+      }
+
+      return [[key, value]]
+    })
+  )
+}
+
+function discoverSkills() {
+  if (!fs.existsSync(SKILLS_DIR)) return []
+
+  return fs.readdirSync(SKILLS_DIR, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => {
+      const skillPath = path.join(SKILLS_DIR, dirent.name)
+      const skillFile = path.join(skillPath, 'SKILL.md')
+
+      if (!fs.existsSync(skillFile)) return null
+
+      const content = fs.readFileSync(skillFile, 'utf8')
+      const { name, groups } = parseFrontmatter(content)
+
+      return { name: name || dirent.name, path: skillPath, groups }
+    })
+    .filter(Boolean)
+}
+
+function setupSkillsForGroups(groups, skills) {
+  if (!skills.length) return
+
+  const groupNames = groups.map(_ => _.name)
+  const skillsByGroup = Object.fromEntries(
+    groupNames.map(name => [name, []])
+  )
+
+  skills.forEach(skill => {
+    const targetGroups = Array.isArray(skill.groups)
+      ? skill.groups.filter(g => groupNames.includes(g))
+      : groupNames
+
+    targetGroups.forEach(group => skillsByGroup[group].push(skill))
+  })
+
+  Object.entries(skillsByGroup).forEach(([group, groupSkills]) => {
+    if (!groupSkills.length) return
+
+    const groupSkillsDir = path.join(SKILLS_DATA_DIR, group)
+    fs.mkdirSync(groupSkillsDir, { recursive: true })
+
+    groupSkills.forEach(skill => {
+      const destPath = path.join(groupSkillsDir, skill.name)
+      if (fs.existsSync(destPath)) fs.rmSync(destPath, { recursive: true })
+      fs.cpSync(skill.path, destPath, { recursive: true })
+    })
+  })
+
+  return skillsByGroup
 }
 
 function expandGroupTemplates(groups) {
@@ -76,28 +148,54 @@ else settings.users.push(admin)
 if (settings.groups) {
   settings.groups = expandGroupTemplates(settings.groups)
 
-  const ids = Object.fromEntries(
-    GROUP_IDS.split(',').map(pair => {
-      const [id, name] = pair.split(':').map(_ => _.trim())
-      return [name, id]
-    })
+  const existingIds = new Set(
+    GROUP_IDS.split(',').map(_ => _.trim()).filter(Boolean)
   )
 
   const newGroups = settings.groups.filter(group => {
-    if (!group.id) group.id = ids[group.name]
-    if (group.id) return
+    const groupId = `${group.name}-${crypto.randomUUID()}`
+    const hasExisting = Array.from(existingIds)
+      .find(id => id.startsWith(`${group.name}-`))
 
-    group.id = crypto.randomUUID()
+    if (hasExisting) {
+      group.id = hasExisting
+      return false
+    }
+
+    group.id = groupId
     return true
   })
 
   if (newGroups.length) console.warn(
     'New group(s) added, please run',
-    `fly secrets set GROUP_IDS="${newGroups
-      .map(_ => `${_.id}:${_.name}`)
-      .concat(GROUP_IDS)}"
+    `fly secrets set GROUP_IDS="${Array.from(existingIds)
+      .concat(newGroups.map(_ => _.id))
+      .join(',')}"
     `
   )
+
+  const skillsByGroup = setupSkillsForGroups(settings.groups, discoverSkills())
+
+  if (skillsByGroup) {
+    Object.entries(skillsByGroup).forEach(([group, skills]) => {
+      if (!skills.length) return
+
+      const skillsServer = group + '-skills'
+      settings.mcpServers[skillsServer] = {
+        command: "uvx",
+        args: ["skill_to_mcp", "--skills-dir", path.join(SKILLS_DATA_DIR, group)],
+        env: { UV_PYTHON: "3.12" }
+      }
+
+      const groupConfig = settings.groups.find(_ => _.name === group)
+      if (groupConfig) {
+        groupConfig.servers = groupConfig.servers || []
+        if (!groupConfig.servers.find(_ => _.name === skillsServer)) {
+          groupConfig.servers.push({ name: skillsServer })
+        }
+      }
+    })
+  }
 }
 
 const settingsDir = path.dirname(PERSISTENT_SETTINGS)
