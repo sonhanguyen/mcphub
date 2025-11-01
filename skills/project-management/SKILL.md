@@ -1,6 +1,7 @@
 ---
 name: project-management
 description: Manage GitHub Projects V2 including listing projects, adding items, updating statuses, and managing custom fields.
+groups: [copilot]
 ---
 
 # GitHub Projects Management
@@ -63,12 +64,3 @@ When managing GitHub Projects:
 - `add_project_item` - Add issue/PR to project
 - `update_project_item` - Update item fields and status
 - `delete_project_item` - Remove item from project
-
-## Examples
-
-- "Add issue #123 to the Sprint 5 project"
-- "Update the status of PR #456 to In Review"
-- "Show me all items in the Q4 Roadmap project"
-- "Move issue #789 to the Done column"
-- "What projects are available in this repository?"
-- "Add this issue to the project and set priority to High"

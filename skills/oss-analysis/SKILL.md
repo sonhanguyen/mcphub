@@ -1,12 +1,12 @@
 ---
 name: oss-analysis
-description: Analyze OSS solutions for code quality, documentation, and best practices using GitHub MCP, Context7, DeepWiki, and Perplexity. Use when users request repository analysis, code review, library documentation lookup, or need insights about GitHub projects and open-source technologies.
+description: Analyze OSS solutions for code quality, documentation, and best practices using Context7, DeepWiki, and Perplexity. Use when users request repository analysis, code review, library documentation lookup, or need insights about GitHub projects and open-source technologies.
 groups: [agent, copilot]
 ---
 
 # OSS Analysis
 
-Comprehensive analysis of open-source software using multiple specialized tools: GitHub MCP server, Context7 for library documentation, DeepWiki for repository docs, and Perplexity for web research.
+Comprehensive analysis of open-source software using multiple specialized tools: Context7 for library documentation, DeepWiki for repository docs, and Perplexity for web research.
 
 ## When to Use This Skill
 
@@ -22,10 +22,7 @@ Use when users:
 
 ## Available Tools
 
-### 1. GitHub MCP Server
-Access repository metadata, file structure, and code content directly from GitHub.
-
-### 2. Context7
+### 1. Context7
 Get up-to-date official documentation for libraries and frameworks. Use for:
 - API references and usage examples
 - Framework-specific patterns and conventions
@@ -35,7 +32,7 @@ Get up-to-date official documentation for libraries and frameworks. Use for:
 1. Use `resolve-library-id` to find the Context7 library ID (e.g., "/vercel/next.js")
 2. Use `get-library-docs` with the resolved ID to fetch documentation
 
-### 3. DeepWiki
+### 2. DeepWiki
 Access comprehensive repository documentation and ask questions about GitHub projects. Use for:
 - Understanding repository architecture and design decisions
 - Finding implementation patterns in codebases
@@ -46,7 +43,7 @@ Access comprehensive repository documentation and ask questions about GitHub pro
 2. Use `read_wiki_contents` to get full documentation
 3. Use `ask_question` for specific queries about the repository
 
-### 4. Perplexity (WebSearch)
+### 3. Perplexity (WebSearch)
 Search the web for current information about OSS projects, trends, and comparisons. Use for:
 - Latest news and updates about libraries
 - Community opinions and comparisons
@@ -58,13 +55,13 @@ Search the web for current information about OSS projects, trends, and compariso
 When analyzing OSS solutions:
 
 1. **Identify the Analysis Type**:
-   - **Repository Analysis**: Use GitHub MCP + DeepWiki
+   - **Repository Analysis**: Look up repository details on GitHub + use DeepWiki
    - **Library Documentation**: Use Context7 first, then supplement with DeepWiki if it's a GitHub-based project
    - **Technology Research**: Use Perplexity for current info, then deep-dive with other tools
    - **Comparison**: Combine all tools for comprehensive comparison
 
 2. **For Repository Analysis**:
-   - Use GitHub MCP server to get repository metadata and statistics
+   - Look up repository metadata and statistics on GitHub
    - Review file structure and organization
    - Check documentation files (README, CONTRIBUTING, etc.)
    - Use DeepWiki to understand architecture and design decisions
@@ -80,7 +77,7 @@ When analyzing OSS solutions:
    - Start with Perplexity to get current landscape and trends
    - Use Context7 for official documentation of identified libraries
    - Use DeepWiki for deep-diving into specific repositories
-   - Use GitHub MCP to examine code structure if needed
+   - Look up repository details on GitHub to examine code structure if needed
 
 5. **Review Documentation Quality** (for repository analysis):
    - Check README completeness and clarity

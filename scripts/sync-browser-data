@@ -1,0 +1,151 @@
+#!/bin/bash
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FLY_TOML="$(dirname "$SCRIPT_DIR")/fly.toml"
+
+if [ -f "$FLY_TOML" ]; then
+    FLY_APP_NAME=$(grep '^app = ' "$FLY_TOML" | sed "s/app = '\(.*\)'/\1/")
+    VOLUME_NAME=$(grep -A1 '\[\[mounts\]\]' "$FLY_TOML" | grep 'source = ' | sed 's/.*source = "\(.*\)"/\1/')
+    MOUNT_DIR=$(grep -A2 '\[\[mounts\]\]' "$FLY_TOML" | grep 'destination = ' | sed 's/.*destination = "\(.*\)"/\1/')
+else
+    echo "Warning: fly.toml not found, using defaults"
+    FLY_APP_NAME="${FLY_APP_NAME:-mcphubx}"
+    VOLUME_NAME="${FLY_VOLUME_NAME:-mcphub}"
+    MOUNT_DIR="/tmp/mcphub"
+fi
+
+LOCAL_DIR="${BROWSER_DATA_DIR:-$HOME/Library/Application Support/Google/Chrome/Default}"
+REMOTE_DIR="${MOUNT_DIR}/browser-data"
+
+FLY_APP_NAME="${FLY_APP_NAME_OVERRIDE:-$FLY_APP_NAME}"
+VOLUME_NAME="${FLY_VOLUME_NAME_OVERRIDE:-$VOLUME_NAME}"
+
+echo "Browser Data Sync"
+echo "================="
+echo "App: $FLY_APP_NAME"
+echo "Volume: $VOLUME_NAME" 
+echo "Mount: $MOUNT_DIR"
+echo "Local: $LOCAL_DIR"
+echo "Remote: $REMOTE_DIR"
+echo "================="
+
+prepare_data() {
+    echo "Preparing browser data..."
+
+    if [ ! -d "$LOCAL_DIR" ]; then
+        echo "Error: Browser data directory not found at $LOCAL_DIR"
+        exit 1
+    fi
+
+    TEMP_DIR=$(mktemp -d)
+    echo "Using temp directory: $TEMP_DIR"
+
+    ESSENTIAL_PATHS=(
+        "Cookies"
+        "Cookies-journal"
+        "Local Storage"
+        "Session Storage"
+        "IndexedDB"
+        "Preferences"
+        "Secure Preferences"
+        "Web Data"
+        "Web Data-journal"
+    )
+
+    for path in "${ESSENTIAL_PATHS[@]}"; do
+        if [ -e "$LOCAL_DIR/$path" ]; then
+            cp -r "$LOCAL_DIR/$path" "$TEMP_DIR/$path" 2>/dev/null || true
+            echo "  Copied: $path"
+        fi
+    done
+
+    echo "$TEMP_DIR"
+}
+
+upload_to_fly() {
+    local source_dir=$1
+
+    echo "Uploading to fly.io..."
+
+    if ! command -v fly &> /dev/null; then
+        echo "Error: fly CLI not found. Please install it first:"
+        echo "curl -L https://fly.io/install.sh | sh"
+        exit 1
+    fi
+
+    if ! fly status --app "$FLY_APP_NAME" &> /dev/null; then
+        echo "Error: Fly app '$FLY_APP_NAME' not found"
+        echo "Please set FLY_APP_NAME environment variable or create the app first."
+        exit 1
+    fi
+
+    TAR_FILE="/tmp/browser-data.tar.gz"
+    echo "Creating archive..."
+    tar -czf "$TAR_FILE" -C "$source_dir" .
+
+    ARCHIVE_SIZE=$(du -h "$TAR_FILE" | cut -f1)
+    echo "Archive size: $ARCHIVE_SIZE"
+
+    echo "Uploading to fly.io volume..."
+
+    fly ssh console --app "$FLY_APP_NAME" --command "mkdir -p $REMOTE_DIR" || true
+    cat "$TAR_FILE" | fly ssh console --app "$FLY_APP_NAME" --command "cd $REMOTE_DIR && tar -xzf - --overwrite"
+
+    rm -f "$TAR_FILE"
+
+    echo "Upload complete!"
+}
+
+download_from_fly() {
+    echo "Downloading from fly.io..."
+
+    if ! command -v fly &> /dev/null; then
+        echo "Error: fly CLI not found"
+        exit 1
+    fi
+
+    mkdir -p "$LOCAL_DIR"
+
+    TAR_FILE="/tmp/browser-data-download.tar.gz"
+
+    echo "Creating remote archive..."
+    if ! fly ssh console --app "$FLY_APP_NAME" --command "[ -d $REMOTE_DIR ]" &> /dev/null; then
+        echo "Error: No browser data found at $REMOTE_DIR on fly.io"
+        exit 1
+    fi
+
+    fly ssh console --app "$FLY_APP_NAME" --command "cd $REMOTE_DIR && tar -czf - ." > "$TAR_FILE"
+
+    echo "Extracting locally..."
+    tar -xzf "$TAR_FILE" -C "$LOCAL_DIR"
+
+    rm -f "$TAR_FILE"
+
+    echo "Download complete!"
+}
+
+case "${1:-upload}" in
+    upload)
+        TEMP_DIR=$(prepare_data)
+        upload_to_fly "$TEMP_DIR"
+        rm -rf "$TEMP_DIR"
+        ;;
+    download)
+        download_from_fly
+        ;;
+    size)
+        prepare_data
+        ;;
+    *)
+        echo "Usage: $0 [upload|download|size]"
+        echo "  upload   - Upload minimal browser data to fly.io (default)"
+        echo "  download - Download browser data from fly.io"
+        echo "  size     - Show size comparison without uploading"
+        echo ""
+        echo "Environment variables:"
+        echo "  BROWSER_DATA_DIR - Local browser data directory (default: ~/Library/Application Support/Google/Chrome/Default)"
+        exit 1
+        ;;
+esac

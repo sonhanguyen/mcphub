@@ -5,10 +5,10 @@ import bcrypt from "bcrypt"
 import path from "path"
 import crypto from "crypto"
 
-const PERSISTENT_SETTINGS = "/app/data/mcp_settings.json"
+const PERSISTENT_SETTINGS = "/tmp/mcphub/mcp_settings.json"
 const SETTINGS = "/app/mcp_settings.json"
 const SKILLS_DIR = "/app/skills"
-const SKILLS_DATA_DIR = "/app/data/skills"
+const SKILLS_DATA_DIR = "/tmp/mcphub/skills"
 const { AUTH_PASSWORD, GROUP_IDS = '' } = process.env
 
 if (!AUTH_PASSWORD) {
