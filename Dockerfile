@@ -1,7 +1,6 @@
 FROM samanhappy/mcphub:latest-full
 
-COPY mcp_settings.json config.js /app/
-COPY skills /app/skills
+COPY mcp_settings.json config.js skills /app/
 
 RUN chmod +x /app/config.js
 

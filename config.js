@@ -9,6 +9,7 @@ const PERSISTENT_SETTINGS = "/tmp/mcphub/mcp_settings.json"
 const SETTINGS = "/app/mcp_settings.json"
 const SKILLS_DIR = "/app/skills"
 const SKILLS_DATA_DIR = "/tmp/mcphub/skills"
+const UV_CACHE_DIR = "/tmp/mcphub/uv-cache"
 const { AUTH_PASSWORD, GROUP_IDS = '' } = process.env
 
 if (!AUTH_PASSWORD) {
@@ -71,6 +72,9 @@ function discoverSkills() {
 
 function setupSkillsForGroups(groups, skills) {
   if (!skills.length) return
+
+  // Ensure UV cache directory exists
+  fs.mkdirSync(UV_CACHE_DIR, { recursive: true })
 
   const groupNames = groups.map(_ => _.name)
   const skillsByGroup = Object.fromEntries(
@@ -184,7 +188,10 @@ if (settings.groups) {
       settings.mcpServers[skillsServer] = {
         command: "uvx",
         args: ["skill_to_mcp", "--skills-dir", path.join(SKILLS_DATA_DIR, group)],
-        env: { UV_PYTHON: "3.12" }
+        env: { 
+          UV_PYTHON: "3.12",
+          UV_CACHE_DIR: UV_CACHE_DIR
+        }
       }
 
       const groupConfig = settings.groups.find(_ => _.name === group)
