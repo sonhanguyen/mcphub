@@ -1,11 +1,11 @@
 {
   "mcpServers": {
     "playwright": {
-      "command": "npx",
+      "command": "pnpx",
       "args": ["@playwright/mcp", "--headless", "--isolated", "--user-data-dir=/tmp/mcphub/browser-data"]
     },
     "perplexity": {
-      "command": "npx",
+      "command": "pnpx",
       "args": ["-y", "@perplexity-ai/mcp-server"],
       "env": {
         "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
