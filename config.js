@@ -184,8 +184,8 @@ if (settings.groups) {
 
       const skillsServer = group + '-skills'
       settings.mcpServers[skillsServer] = {
-        command: "uvx",
-        args: ["skill_to_mcp", "--skills-dir", path.join(SKILLS_DATA_DIR, group)]
+        command: "/root/.local/bin/skill_to_mcp",
+        args: ["--skills-dir", path.join(SKILLS_DATA_DIR, group)]
       }
 
       const groupConfig = settings.groups.find(_ => _.name === group)
