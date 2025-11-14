@@ -2,7 +2,16 @@
   "mcpServers": {
     "playwright": {
       "command": "npx",
-      "args": ["@playwright/mcp", "--headless", "--isolated", "--user-data-dir=/tmp/mcphub/browser-data"]
+      "args": [
+        "@playwright/mcp",
+        "--headless",
+        "--isolated",
+        "--user-data-dir=/tmp/mcphub/browser-data"
+      ]
+    },
+    "exa": {
+      "type": "streamable-http",
+      "url": "https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}&tools=web_search_exa,get_code_context_exa,crawling_exa,company_research_exa,linkedin_search_exa,deep_researcher_start,deep_researcher_check"
     },
     "perplexity": {
       "command": "npx",
@@ -14,10 +23,6 @@
     "deepwiki": {
       "type": "sse",
       "url": "https://mcp.deepwiki.com/sse"
-    },
-    "context7": {
-      "type": "streamable-http",
-      "url": "https://mcp.context7.com/mcp"
     },
     "github": {
       "type": "streamable-http",
@@ -40,19 +45,13 @@
     {
       "name": "local",
       "description": "base tools for agents",
-      "servers": [
-        { "name": "perplexity" },
-        { "name": "deepwiki" },
-        { "name": "context7" }
-      ]
+      "servers": [{ "name": "exa" }, { "name": "deepwiki" }]
     },
     {
       "name": "agent",
       "description": "with agentic headless browser and prefer the gh cli over github",
       "include": ["local"],
-      "servers": [
-        { "name": "playwright" }
-      ]
+      "servers": [{ "name": "playwright" }]
     },
     {
       "name": "copilot",
