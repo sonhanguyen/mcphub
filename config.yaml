@@ -1,11 +1,11 @@
-mcpServers:
-  perplexity:
-    command: npx
-    args:
-      - "-y"
-      - "@perplexity-ai/mcp-server"
-    env:
-      PERPLEXITY_API_KEY: "${PERPLEXITY_API_KEY}"
+mcp_servers:
   deepwiki:
-    type: sse
-    url: "https://mcp.deepwiki.com/sse"
+    url: https://mcp.deepwiki.com/mcp
+    transport: "http"
+
+  perplexity:
+    transport: "stdio"
+    command: "npx"
+    args: ["-y", "perplexity-mcp"]
+    env:
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
