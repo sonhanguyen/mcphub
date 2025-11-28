@@ -1,0 +1,67 @@
+{
+  "name": "@mcphub/mcp-proxy",
+  "version": "0.1.0",
+  "description": "MCP aggregator server that combines multiple MCP servers",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./aggregator": {
+      "import": "./dist/aggregator.js",
+      "types": "./dist/aggregator.d.ts"
+    },
+    "./mcp-tool-provider": {
+      "import": "./dist/mcp-tool-provider.js",
+      "types": "./dist/mcp-tool-provider.d.ts"
+    },
+    "./file-config-provider": {
+      "import": "./dist/file-config-provider.js",
+      "types": "./dist/file-config-provider.d.ts"
+    },
+    "./git-config-provider": {
+      "import": "./dist/git-provisioner.js",
+      "types": "./dist/git-provisioner.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "types": "./dist/types.d.ts"
+    }
+  },
+  "bin": {
+    "mcp-proxy": "./dist/index.js",
+    "mcp-hub": "./dist/mcp-hub.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "bun run --watch index.ts",
+    "dev:hub": "bun run --watch mcp-hub.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:hub": "node dist/mcp-hub.js",
+    "test": "node --test test.mjs",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "pino": "^10.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "aggregator",
+    "proxy"
+  ],
+  "license": "MIT"
+}
