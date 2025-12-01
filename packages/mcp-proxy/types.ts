@@ -12,8 +12,12 @@ export interface ToolProvider {
   stop?(): Promise<void>;
 }
 
-export interface ConfigProvider {
-  load(): Promise<MCPSettings>;
+export interface Unsubscribe {
+  (): void
+}
+
+export interface Provider<T> {
+  onChange(callback: (value: T) => void): Unsubscribe
 }
 
 export interface StdioServerConfig {
@@ -46,19 +50,15 @@ export interface MCPSettings {
   secrets?: Record<string, string>;
 }
 
-export interface GitConfigProviderOptions {
-  source: string;
-  localPath: string;
-  secretsFile?: string;
-  sops?: {
-    ageKeyFile?: string;
-    ageKey?: string;
-  };
+export interface SopsOptions {
+  ageKeyFile?: string
+  ageKey?: string
 }
 
-export interface FileConfigProviderOptions {
-  path: string;
-  secretsPath?: string;
+export interface GitProviderOptions {
+  source: string
+  localPath: string
+  sops?: SopsOptions
 }
 
 export function substituteSecrets(config: MCPSettings): MCPSettings {

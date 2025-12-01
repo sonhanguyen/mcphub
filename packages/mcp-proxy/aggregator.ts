@@ -5,9 +5,6 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { ToolProvider } from "./types";
-import { createLogger } from "./logger";
-
-const log = createLogger("MCPAggregator");
 
 export interface AggregatorOptions {
   name?: string;
